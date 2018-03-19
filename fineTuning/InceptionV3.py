@@ -1,7 +1,8 @@
 import matplotlib
 matplotlib.use("Agg")
 
-from keras.applications.inception_v3 import InceptionV3
+from keras.applications.mobilenet import MobileNet
+
 from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
@@ -17,7 +18,7 @@ import matplotlib.pyplot as plt
 
 def fine_tuning():
 	#Load Data
-	(data,labels,CategoryMapping)=LoadImages("/nfs/ug/homes-0/y/yangze3/Image-based-Reminder/images",299,299)
+	(data,labels,CategoryMapping)=LoadImages("/nfs/ug/homes-0/y/yangze3/Image-based-Reminder/images/original",224,224)
 	# scale the raw pixel intensities to the range [0, 1]
 	data = np.array(data, dtype="float") / 255.0
 	data-=0.5
@@ -32,7 +33,9 @@ def fine_tuning():
 	print (NumberOfClass)
 
 	# create the base pre-trained model
-	base_model = InceptionV3(weights='imagenet', include_top=False)
+	base_model = MobileNet(weights='imagenet', include_top=False,input_shape=(224, 224, 3))
+	for layer in base_model.layers:
+	    layer.trainable = False
 
 	# add a global spatial average pooling layer
 	x = base_model.output
@@ -73,7 +76,7 @@ def fine_tuning():
 	batch_size=32
 	nb_epoch=15
 
-        model.summary()
+	model.summary()
 
 	model.fit(trainX, trainY,
               batch_size=batch_size,
@@ -102,8 +105,8 @@ def fine_tuning():
               validation_data=(testX, testY),
               )
 	model.evaluate(testX,testY)
-        print("[INFO] serializing network...")
-	model.save("inception.model")
+	print("[INFO] serializing network...")
+	model.save("DenseNet201.model")
 	# we train our model again (this time fine-tuning the top 2 inception blocks
 	# alongside the top Dense layers
 	#model.fit_generator(...)
